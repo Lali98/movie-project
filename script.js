@@ -33,13 +33,15 @@ document.getElementById('search').onsubmit = async function (event) {
     event.preventDefault();
     let searchTitle = event.target.elements.search.value;
     let searchYear = event.target.elements.year.value;
-    if (searchYear === '') {
+    let searchTitleurl;
+    if (searchTitle === '') {
         alert('Keresőszó kitöltése kötelező');
+        return;
     } else {
-        searchTitle = encodeURI(searchTitle);
+        searchTitleurl = encodeURI(searchTitle);
     }
 
-    let url = `http://www.omdbapi.com/?s=${searchTitle}&y=${searchYear}&apiKey=9606ae0f`
+    let url = `http://www.omdbapi.com/?s=${searchTitleurl}&${searchYear ? `y=${searchYear}&` : ''}apiKey=9606ae0f`
 
     let respose = await fetch(url);
     if (!respose.ok) {
@@ -50,7 +52,7 @@ document.getElementById('search').onsubmit = async function (event) {
     let movies = await respose.json();
 
     if (!movies.Search) {
-        alert('A keresés sikertelen');
+        alert(`Nincs ilyen cím az adatbázisban: \"${searchTitle}\"`);
         return;
     }
 
@@ -78,4 +80,20 @@ function moviesRenderList(movieslist) {
         </li>`
     }
     document.getElementById('movies').innerHTML = movieHTML;
+
+    let movieTitles = document.querySelectorAll('.single-movie-btn');
+    for (let movieTitle of movieTitles) {
+        movieTitle.onclick = async function (event) {
+            let url = `http://www.omdbapi.com/?i=${event.target.parentElement.dataset.imdbid}&apiKey=9606ae0f`;
+            let respose = await fetch(url);
+            if (!respose.ok) {
+                alert('Valami hiba történt');
+                return;
+            }
+            let movie = await respose.json();
+            document.getElementById('movie-description').innerHTML = `
+                <h1>${movie.Title}</h1>
+                <p>${movie.Plot}</p>`
+        }
+    }
 }
